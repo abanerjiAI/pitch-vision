@@ -5,8 +5,8 @@
  * plain Map instead of a browser.
  */
 
-import { STORAGE_VERSION } from './drills.js';
-import { validateSession } from './validate.js';
+import { STORAGE_VERSION } from './drills.js?v=3';
+import { validateSession } from './validate.js?v=3';
 
 export const STORAGE_KEY = 'pitchvision.v1';
 

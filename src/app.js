@@ -17,8 +17,8 @@ import {
   DRILLS,
   STORAGE_VERSION,
   getDrill,
-} from './drills.js';
-import { METRICS, deriveSession, deriveBlock, getMetric } from './metrics.js';
+} from './drills.js?v=3';
+import { METRICS, deriveSession, deriveBlock, getMetric } from './metrics.js?v=3';
 import {
   formatDate,
   formatDelta,
@@ -29,11 +29,11 @@ import {
   summariseSeries,
   valuesOf,
   drillsUsed,
-} from './stats.js';
-import { csvFileName, toCsv, toTextSummary } from './csv.js';
-import { countErrors, errorMessages, todayIso, validateSession } from './validate.js';
-import { createRepo, isAvailable, localStorageAdapter } from './storage.js';
-import { el, fmt, pctText, qs, setChildren } from './dom.js';
+} from './stats.js?v=3';
+import { csvFileName, toCsv, toTextSummary } from './csv.js?v=3';
+import { countErrors, errorMessages, todayIso, validateSession } from './validate.js?v=3';
+import { createRepo, isAvailable, localStorageAdapter } from './storage.js?v=3';
+import { el, fmt, pctText, qs, setChildren } from './dom.js?v=3';
 
 const UI_KEY = 'pitchvision.ui';
 
@@ -169,7 +169,9 @@ function render() {
 /* ----------------------------------------------------------------- record */
 
 function fieldId(scope, key) {
-  return `${scope}:${key}`;
+  // scope is a block uid ('b1') or 'cond'; the separator is a dash so the id can
+  // be used directly in a selector without escaping.
+  return `${scope}-${key}`;
 }
 
 function numberInput(spec, scope, block) {
@@ -249,7 +251,7 @@ function blockCard(block, index, total) {
   });
 
   const timerNote = el('p', { class: 'timer__note', id: `${scope}-timer-note` });
-  state.refs.set(`${scope}:note`, timerNote);
+  state.refs.set(`${scope}-timer-note`, timerNote);
   const timerButton = el('button', {
     class: 'btn btn--timer',
     type: 'button',
@@ -605,7 +607,7 @@ function toggleTimer(scope, button, infoNode) {
     syncDraftFromRefs();
   }
   infoNode.textContent = timer.samples.length ? `${timer.samples.length} rep${timer.samples.length === 1 ? '' : 's'}` : '';
-  const note = state.refs.get(`${scope}:note`);
+  const note = state.refs.get(`${scope}-timer-note`);
   if (note) {
     note.textContent = timer.samples.length
       ? `${timer.samples.length} timed rep${timer.samples.length === 1 ? '' : 's'} · mean ${mean.toFixed(2)} s${
@@ -635,39 +637,105 @@ function playerSelect(current, onchange, { allLabel = 'All players' } = {}) {
   return select;
 }
 
-function summaryCard(sessions, playerName) {
-  const rows = sessions.map((s) => ({ session: s, d: deriveSession(s) }));
-  const withIndex = rows.filter((r) => r.d.index != null);
-  const latest = withIndex[withIndex.length - 1];
-  const previous = withIndex.length > 1 ? withIndex[withIndex.length - 2] : null;
-  const delta = latest && previous ? latest.d.index - previous.d.index : null;
-  const deltaInfo = delta == null ? null : formatDelta(delta, 1, true);
+/**
+ * Summary cards. For one player the roll-up is meaningful; across players the
+ * "latest index" of one player against another's previous session is not, so
+ * that mode shows a per-player breakdown instead.
+ */
+function summaryCards(sessions, playerName) {
+  const cards = [];
 
-  const stats = [
-    ['Sessions', String(sessions.length)],
-    ['First', sessions.length ? formatDate(sessions[0].date) : '—'],
-    ['Latest', sessions.length ? formatDate(sessions[sessions.length - 1].date) : '—'],
-    ['Drills used', String(drillsUsed(sessions).length)],
-    ['Latest drill index', latest ? fmt(latest.d.index, 1) : '—'],
-    [
-      'Change vs previous',
-      deltaInfo ? `${deltaInfo.text}` : '—',
-    ],
-  ];
+  if (playerName) {
+    const rows = sessions.map((s) => ({ session: s, d: deriveSession(s) }));
+    const withIndex = rows.filter((r) => r.d.index != null);
+    const latest = withIndex[withIndex.length - 1];
+    const previous = withIndex.length > 1 ? withIndex[withIndex.length - 2] : null;
+    const deltaInfo = latest && previous ? formatDelta(latest.d.index - previous.d.index, 1, true) : null;
+    const stats = [
+      ['Sessions', String(sessions.length)],
+      ['First', sessions.length ? formatDate(sessions[0].date) : '—'],
+      ['Latest', sessions.length ? formatDate(sessions[sessions.length - 1].date) : '—'],
+      ['Drills used', String(drillsUsed(sessions).length)],
+      ['Latest drill index', latest ? fmt(latest.d.index, 1) : '—'],
+      ['Change vs previous', deltaInfo ? deltaInfo.text : '—', deltaInfo?.dir ?? null],
+    ];
+    return [
+      el(
+        'section',
+        { class: 'card summary' },
+        el('h3', { class: 'card__title', text: `${playerName} — at a glance` }),
+        el('dl', { class: 'stats' }, ...statRows(stats)),
+      ),
+    ];
+  }
 
-  return el(
-    'section',
-    { class: 'card summary' },
-    el('h3', { class: 'card__title', text: playerName ? `${playerName} — at a glance` : 'All players — at a glance' }),
+  const players = groupByPlayer(sessions);
+  const first = sessions.length ? sessions[0].date : null;
+  const last = sessions.length ? sessions[sessions.length - 1].date : null;
+  cards.push(
     el(
-      'dl',
-      { class: 'stats' },
-      ...stats.flatMap(([label, value]) => [
-        el('dt', { text: label }),
-        el('dd', { text: value, class: label === 'Change vs previous' && deltaInfo ? `delta delta--${deltaInfo.dir > 0 ? 'up' : deltaInfo.dir < 0 ? 'down' : 'flat'}` : '' }),
-      ]),
+      'section',
+      { class: 'card summary' },
+      el('h3', { class: 'card__title', text: 'All players — at a glance' }),
+      el(
+        'dl',
+        { class: 'stats' },
+        ...statRows([
+          ['Players', String(players.length)],
+          ['Sessions', String(sessions.length)],
+          ['First', first ? formatDate(first) : '—'],
+          ['Latest', last ? formatDate(last) : '—'],
+          ['Drills used', String(drillsUsed(sessions).length)],
+        ]),
+      ),
+      el('p', { class: 'muted', text: 'Pick a player above to compare their sessions against their own earlier ones.' }),
     ),
   );
+
+  cards.push(
+    el(
+      'section',
+      { class: 'card' },
+      el('h3', { class: 'card__title', text: 'Each player' }),
+      el(
+        'div',
+        { class: 'tablewrap' },
+        el(
+          'table',
+          { class: 'table' },
+          el('thead', {}, el('tr', {}, el('th', { text: 'Player' }), el('th', { text: 'Sessions' }), el('th', { text: 'Latest index' }), el('th', { text: 'Change' }))),
+          el(
+            'tbody',
+            {},
+            ...players.map((player) => {
+              const derived = player.sessions.map((s) => deriveSession(s)).filter((d) => d.index != null);
+              const latest = derived[derived.length - 1] ?? null;
+              const prev = derived.length > 1 ? derived[derived.length - 2] : null;
+              const info = latest && prev ? formatDelta(latest.index - prev.index, 1, true) : null;
+              return el(
+                'tr',
+                {},
+                el('td', { text: player.player }),
+                el('td', { text: String(player.sessions.length) }),
+                el('td', { text: latest ? fmt(latest.index, 1) : '—' }),
+                el('td', { html: info ? `<span class="delta delta--${info.dir > 0 ? 'up' : info.dir < 0 ? 'down' : 'flat'}">${info.text}</span>` : '—' }),
+              );
+            }),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  return cards;
+}
+
+/** [label, value, deltaDirection?] rows → definition list children. */
+function statRows(rows) {
+  return rows.flatMap(([label, value, dir]) => [
+    el('dt', { text: label }),
+    el('dd', { text: value, class: dir == null ? '' : `delta delta--${dir > 0 ? 'up' : dir < 0 ? 'down' : 'flat'}` }),
+  ]);
 }
 
 function sessionCard(session) {
@@ -814,7 +882,7 @@ function renderHistory() {
         if (v) state.compare.player = v;
         render();
       })),
-      el('p', { class: 'view__hint', text: `${ordered.length} session${ordered.length === 1 ? '' : 's'}${selected ? '' : ' across all players'}, oldest first below the summary.` }),
+      el('p', { class: 'view__hint', text: `${ordered.length} session${ordered.length === 1 ? '' : 's'}${selected ? '' : ' across all players'}, newest first below the summary.` }),
       el(
         'div',
         { class: 'row row--wrap' },
@@ -838,7 +906,7 @@ function renderHistory() {
         }),
       ),
     ),
-    summaryCard(ordered, selected?.player),
+    ...summaryCards(ordered, selected?.player),
     el('div', { class: 'sessions' }, ...ordered.slice().reverse().map(sessionCard)),
   ]);
 }

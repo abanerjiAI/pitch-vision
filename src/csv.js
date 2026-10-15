@@ -4,7 +4,7 @@
  * storage.js is the lossless format.
  */
 
-import { deriveSession, deriveBlock } from './metrics.js';
+import { deriveSession, deriveBlock } from './metrics.js?v=3';
 
 export const CSV_HEADER = [
   'player',

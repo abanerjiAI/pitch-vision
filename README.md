@@ -6,6 +6,12 @@
 
 Live demo: <https://nashvilleaiclub.com/demo/abanerji/pitch-vision/>
 
+![Logging a drill block](docs/screenshot-record.png)
+![A player's history, with one session's drill table](docs/screenshot-history-player.png)
+![Comparing a player's drill index across five sessions](docs/screenshot-compare.png)
+
+*Screenshots show example sessions, not real players.*
+
 ---
 
 ## What it does
@@ -70,7 +76,18 @@ npm test
 
 # Check the deployed copy through the CDN
 npm run verify -- https://nashvilleaiclub.com/demo/abanerji/pitch-vision/
+
+# After changing any file: bump the asset version, then redeploy
+npm run bump          # rewrites ?v=N in index.html and every import in src/*.js
+npm run check         # fails if those versions ever disagree
 ```
+
+**Why the version bump matters.** The origin sends `Cache-Control: immutable,
+max-age=2592000` for static files, so the CDN and the browser cache `app.js`
+under its own URL for 30 days while the HTML is never cached. Without a new
+`?v=` a returning visitor would keep running the old code. `tools/bump-version.mjs`
+bumps it in one place and `npm run check` refuses a half-bumped tree (a module
+imported under two different query strings would be instantiated twice).
 
 **On the pitch:** open the live URL on your phone, then *Share → Add to Home Screen*. It opens full screen and keeps working with no signal once loaded. Data lives in that browser; export a JSON back-up before changing phone, browser or clearing site data.
 
@@ -98,7 +115,9 @@ src/csv.js            CSV export and the text summary (pure)
 src/storage.js        localStorage repo behind an injectable adapter
 src/app.js            the interface (the only file that touches the DOM)
 src/styles.css        mobile-first, daylight-readable
+docs/                 screenshots used above
 tools/serve.mjs       zero-dependency static server
+tools/bump-version.mjs      cache-busting version for every asset URL
 tools/verify-deployed.mjs   live-deploy check through the CDN
 tests/                node:test suite, run by tests/run.js
 ```
@@ -108,12 +127,13 @@ tests/                node:test suite, run by tests/run.js
 The `nashvilleaiclub.com` docroot is shared by the multisite, so a directory in `demo/abanerji/pitch-vision/` answers on both the live and the stage host at the same path.
 
 ```bash
+npm run bump   # only when the code changed
 tar czf /tmp/pitch-vision.tar.gz index.html src tools package.json README.md LICENSE
 scp /tmp/pitch-vision.tar.gz <host>:~/ && ssh <host> '
   D=<docroot>/demo/abanerji/pitch-vision
   mkdir -p "$D" && tar xzf ~/pitch-vision.tar.gz -C "$D"
   chown -R www-data:www-data "$D"'
-npm run verify
+npm run verify   # fetches every asset with ?v=<n> as a browser would
 ```
 
 ## Known limits

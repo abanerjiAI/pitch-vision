@@ -9,7 +9,9 @@
   "scripts": {
     "start": "node tools/serve.mjs",
     "test": "node tests/run.js",
-    "verify": "node tools/verify-deployed.mjs"
+    "verify": "node tools/verify-deployed.mjs",
+    "bump": "node tools/bump-version.mjs",
+    "check": "node tools/bump-version.mjs --check"
   },
   "engines": {
     "node": ">=18"

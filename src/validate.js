@@ -5,8 +5,8 @@
  * is written unless validation passes.
  */
 
-import { getDrill, CONDITIONS_NOTES_LIMIT, STORAGE_VERSION } from './drills.js';
-import { playerKey } from './stats.js';
+import { getDrill, CONDITIONS_NOTES_LIMIT, STORAGE_VERSION } from './drills.js?v=3';
+import { playerKey } from './stats.js?v=3';
 
 export const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const INT_RE = /^[+-]?\d+$/;

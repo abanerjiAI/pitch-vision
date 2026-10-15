@@ -10,7 +10,7 @@
  *                coaching summary of drill performance, not a clinical score.
  */
 
-import { getDrill } from './drills.js';
+import { getDrill } from './drills.js?v=3';
 
 export const INDEX_WEIGHTS = { accuracy: 0.5, speed: 0.3, scanning: 0.2 };
 
