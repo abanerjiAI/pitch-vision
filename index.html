@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b5138">
+<meta name="description" content="PitchVision — log repeatable field drills and track a soccer player's functional vision across sessions. Drill performance only, not a medical or vision diagnosis.">
+<title>PitchVision — functional vision drill tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b5138'/%3E%3Ctext x='32' y='44' font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='%23ffffff' text-anchor='middle'%3EPV%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="bar__brand">
+    <span class="bar__mark" aria-hidden="true">PV</span>
+    <span class="bar__titles">
+      <strong id="appTitle">PitchVision</strong>
+      <span class="bar__sub" id="appSub">Functional vision drill tracker</span>
+    </span>
+  </div>
+  <button id="helpBtn" class="btn btn--ghost btn--icon" type="button" aria-label="Help and data">?</button>
+</header>
+
+<main id="main" class="main">
+  <section class="view" id="view-record" aria-label="Record a session"></section>
+  <section class="view" id="view-history" aria-label="Previous results" hidden></section>
+  <section class="view" id="view-compare" aria-label="Compare sessions" hidden></section>
+  <section class="view" id="view-more" aria-label="Help, data and notes" hidden></section>
+</main>
+
+<footer class="foot">
+  <p class="foot__note">Drill performance only — not a medical or vision diagnosis.</p>
+</footer>
+
+<nav class="tabs" aria-label="Sections">
+  <button class="tab is-active" type="button" data-view="record" aria-current="page">Record</button>
+  <button class="tab" type="button" data-view="history" aria-current="false">History</button>
+  <button class="tab" type="button" data-view="compare" aria-current="false">Compare</button>
+  <button class="tab" type="button" data-view="more" aria-current="false">More</button>
+</nav>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<noscript>
+  <p class="banner banner--warn">PitchVision needs JavaScript. Enable it, or run the app on a device that has it.</p>
+</noscript>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "pitch-vision",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PitchVision — a field-side web app for logging repeatable soccer drills and tracking a player's functional vision across sessions. Drill performance only, not a medical or vision diagnosis.",
+  "keywords": ["soccer", "football", "coaching", "drills", "peripheral-vision", "scanning"],
+  "license": "MIT",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node tests/run.js",
+    "verify": "node tools/verify-deployed.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
